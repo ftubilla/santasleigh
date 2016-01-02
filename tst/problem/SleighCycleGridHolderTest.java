@@ -55,7 +55,6 @@ public class SleighCycleGridHolderTest {
         holder.add(cycle1);
         holder.add(cycle2);
         
-        assertTrue( holder.getNeighbors(cycle1, 0, 0).contains(cycle1) );
         assertFalse( holder.getNeighbors(cycle1, 0, 0).contains(cycle2) );
         assertFalse( holder.getNeighbors(cycle1, 2, 2).contains(cycle2) );
         assertTrue( holder.getNeighbors(cycle1, 3, 2).contains(cycle2) );

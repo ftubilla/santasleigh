@@ -24,9 +24,8 @@ public class TwoOptSleighSolverTest {
         options.numLongitudeNeighbors = 24;
         Solver solver = new TwoOptSleighSolver(options);
         Solution solution = solver.solve(dao, baseSolution);
-        System.out.println("Two Opt solution cost " + solution.getTotalCost());
-        solution.writeCsv("data/sol_test.csv");
-       
+        System.out.println(solution);
+        solution.writeCsv("data/test/two_opt_sol_test.csv");
     }
 
 }

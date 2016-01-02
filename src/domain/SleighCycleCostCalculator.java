@@ -1,12 +1,15 @@
 package domain;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
 import cost.HaversineDistance;
 import cost.PathCostCalculator;
 
-public class SleighCycleCostCalculator implements PathCostCalculator<SleighCycle> {
-    
+public class SleighCycleCostCalculator implements PathCostCalculator<SleighCycle>, Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     @Override
     public double computeCost(SleighCycle cycle) {
         

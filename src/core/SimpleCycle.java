@@ -7,6 +7,7 @@ import lombok.Getter;
 
 public class SimpleCycle<L extends Location> extends Path<L> {
 
+    private static final long serialVersionUID = 1L;
     @Getter private boolean isClosed = false;
     private boolean isCloseInProgress = false;
     

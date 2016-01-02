@@ -7,7 +7,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import lombok.Data;
 import domain.SleighCycle;
 import domain.SleighLocation;
 
@@ -25,7 +24,8 @@ public class SleighCycleGridHolder {
     
     public void add(SleighCycle cycle) {
         double[] centroid = getCentroid(cycle);
-        GridCoordinate coordinate = getGridCoordinate( centroid[0], centroid[1] );
+        GridCoordinate coordinate = GridCoordinate.getGridCoordinate( centroid[0], centroid[1], 
+                latGridSize, longGridSize);
         if (!cycleMap.containsKey(coordinate)) {
             cycleMap.put(coordinate, new HashSet<>());
         }
@@ -48,12 +48,14 @@ public class SleighCycleGridHolder {
             for (int j = -numNeighborsLong; j <= numNeighborsLong; j++) {
                 double lat = centroid[0] + i * latGridSize;
                 double lgt = centroid[1] + j * longGridSize;
-                GridCoordinate gridCoordinate = getGridCoordinate(lat, lgt);
+                GridCoordinate gridCoordinate = GridCoordinate.getGridCoordinate(lat, lgt,
+                        latGridSize, longGridSize);
                 if (cycleMap.get(gridCoordinate) != null) {
                     returnCycles.addAll(cycleMap.get(gridCoordinate));
                 }
             }
         }
+        returnCycles.remove(cycle);
         return returnCycles;
     }
     
@@ -70,19 +72,5 @@ public class SleighCycleGridHolder {
         }
         return new double[] { sumLat / numLocs, sumLong / numLocs };
     }
-    
-    
-    private GridCoordinate getGridCoordinate(double latitude, double longitude) {
-        int discLat  = (int) ( Math.floor( latitude % 360 / latGridSize ) * latGridSize );
-        int discLong = (int) ( Math.floor( longitude % 360 / longGridSize ) * longGridSize );
-        return new GridCoordinate(discLat, discLong);
-    }
-    
-    
-    @Data
-    public class GridCoordinate {
-        private final int latitutde;
-        private final int longitude;
-    }
-    
+
 }

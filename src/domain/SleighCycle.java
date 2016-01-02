@@ -8,6 +8,7 @@ import core.SimpleCycle;
 @Getter
 public class SleighCycle extends SimpleCycle<SleighLocation> {
 
+    private static final long serialVersionUID = 1L;
     private static long counter = 0;
     
     private final long id;

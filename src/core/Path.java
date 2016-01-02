@@ -1,10 +1,12 @@
 package core;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class Path<L extends Location> implements Iterable<L> {
+public class Path<L extends Location> implements Iterable<L>, Serializable {
 
+    private static final long serialVersionUID = 1L;
     protected LinkedList<L> locations;
     protected LinkedList<Edge> edges;
     
