@@ -8,6 +8,7 @@ import java.util.Set;
 import problem.SleighLocationGridHolder;
 import xpress.ProblemFactory;
 
+import com.dashoptimization.XPRB;
 import com.dashoptimization.XPRBexpr;
 import com.dashoptimization.XPRBprob;
 import com.dashoptimization.XPRBvar;
@@ -23,12 +24,12 @@ public class NetworkSleighProblem {
     private final Set<Node> nodes;
     private final Set<DirectedEdge> edges;
     private final Map<SleighLocation, Node> innerLocationToNode;
-    private final Options options;
+    
+    private Map<DirectedEdge, XPRBvar> edgeToVar; 
     
     public NetworkSleighProblem(Options options, GiftDao dao, int numSleighs) {
         
         this.problem = ProblemFactory.newProblem("network_" + numSleighs + "_sleighs");
-        this.options = options;
         
         SleighLocationGridHolder holder = new SleighLocationGridHolder(options.latitudeGridSizeDegrees,
                 options.longitudeGridSizeGegrees);
@@ -36,6 +37,9 @@ public class NetworkSleighProblem {
         nodes = new LinkedHashSet<>();
         edges = new LinkedHashSet<>();
         innerLocationToNode = new HashMap<>();
+        
+        int scaledBaseWeight = (int) ( options.weightRoundingMultiplier * Constants.SLEIGH_BASE_WEIGHT );
+        int scaledCargoLimit = (int) ( options.weightRoundingMultiplier * Constants.SLEIGH_CARGO_WEIGHT_LIMIT);
         
         //Create a node for each gift location
         int totalDemand = 0;
@@ -50,9 +54,9 @@ public class NetworkSleighProblem {
         
         //Add a node for the North Pole outgoing and incoming
         Node northPoleOutgoing = new Node(0L, Constants.SLEIGH_NORTH_POLE, 
-                totalDemand + numSleighs * (int) Constants.SLEIGH_BASE_WEIGHT );
+                totalDemand + numSleighs * scaledBaseWeight );
         Node northPoleIncoming = new Node(nodes.size() + 1, Constants.SLEIGH_NORTH_POLE,
-                -numSleighs * (int) Constants.SLEIGH_BASE_WEIGHT );
+                -numSleighs * scaledBaseWeight );
 
         //Add an edge from the north pole to each possible edge and back
         for ( Node node : nodes ) {
@@ -60,13 +64,12 @@ public class NetworkSleighProblem {
                     node.getSleighLocation());
             //These edges have an upper bound equal to total demand + one sleigh weight
             DirectedEdge outEdge = new DirectedEdge(northPoleOutgoing, node, outCost,
-                    (int) ( Constants.SLEIGH_CARGO_WEIGHT_LIMIT + Constants.SLEIGH_BASE_WEIGHT) );
+                    scaledCargoLimit + scaledBaseWeight );
             edges.add(outEdge);
             double inCost = HaversineDistance.compute(node.getSleighLocation(),
                     northPoleIncoming.getSleighLocation());
             //These edges have an upper bound equal to one sleigh weight
-            DirectedEdge inEdge = new DirectedEdge(node, northPoleIncoming, inCost,
-                    (int) ( Constants.SLEIGH_BASE_WEIGHT) );
+            DirectedEdge inEdge = new DirectedEdge(node, northPoleIncoming, inCost, scaledBaseWeight);
             edges.add(inEdge);
         }
 
@@ -90,7 +93,7 @@ public class NetworkSleighProblem {
     public void init() {
         
         //Add the edge flow variables
-        Map<DirectedEdge, XPRBvar> edgeToVar = new HashMap<>();
+        edgeToVar = new HashMap<>();
         for ( DirectedEdge edge : edges ) {
             edgeToVar.put( edge, problem.newVar(edge.toString(), 0.0, edge.getFlowUpperBound()) );
         }
@@ -108,11 +111,23 @@ public class NetworkSleighProblem {
         for ( Node node : nodes ) {
             problem.newCtr(node.toString(), nodeToConstraintExpr.get(node).eql( node.getOutflow() ));
         }
-
-        //TODO Set the objective
-        problem.print();
+        
+        //Set the objective
+        XPRBexpr objective = new XPRBexpr();
+        for ( DirectedEdge edge : edges ) {
+            objective.addTerm(edgeToVar.get(edge), edge.getCost());
+        }
+        problem.setObj(objective);
+        problem.setSense(XPRB.MINIM);
     }
     
+    public void solve() {
+        problem.lpOptimise("n");
+        for (DirectedEdge edge : edges) {
+            System.out.println(edge.getFrom().getId() + "->" + edge.getTo().getId() + 
+                    ":" + edgeToVar.get(edge).getSol());
+        }
+    }
     
     public static class Options {
         public double weightRoundingMultiplier = 100;

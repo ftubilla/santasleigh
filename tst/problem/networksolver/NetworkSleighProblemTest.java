@@ -14,6 +14,7 @@ public class NetworkSleighProblemTest {
         NetworkSleighProblem.Options options = new NetworkSleighProblem.Options();
         NetworkSleighProblem problem = new NetworkSleighProblem(options, dao, 2);
         problem.init();
+        problem.solve();
     }
 
 }
