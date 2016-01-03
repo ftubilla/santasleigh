@@ -32,8 +32,10 @@ public class GreedySolver implements Solver {
         while ( locations.getNumLocations() > 0 ) {
             
             //Create a new cycle
+            System.out.println("creating new cycle");
             SleighCycle cycle = new SleighCycle();
             SleighLocation previousLocation = Constants.SLEIGH_NORTH_POLE;
+            System.out.println(locations.getClosestLocation(previousLocation));
             Optional<SleighLocation> optionalOfNextLocation;
             //Add locations until no longer possible
             while ( ( optionalOfNextLocation = 

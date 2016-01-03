@@ -1,4 +1,4 @@
-package santasleigh.xpress;
+package xpress;
 
 import com.dashoptimization.XPRB;
 import com.dashoptimization.XPRBprob;

@@ -49,6 +49,10 @@ public class SleighLocationGridHolderTest {
         assertEquals(loc2, holder.getClosestLocation(loc3).get() );
         assertEquals(loc3, holder.getClosestLocation(loc2).get() );
 
+        assertTrue( holder.getClosestNLocations(loc1, 2).contains(loc2));
+        assertTrue( holder.getClosestNLocations(loc1, 2).contains(loc3));
+        assertTrue( holder.getClosestNLocations(loc1, 3).contains(loc2));
+        
         assertEquals(3, holder.getNumLocations());
         holder.remove(loc2);
         assertEquals(loc3, holder.getClosestLocation(loc1).get() );

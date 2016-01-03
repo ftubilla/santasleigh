@@ -2,6 +2,8 @@ package santasleigh.xpress;
 
 import org.junit.Test;
 
+import xpress.ProblemFactory;
+
 public class ProblemFactoryTest {
 
     @Test

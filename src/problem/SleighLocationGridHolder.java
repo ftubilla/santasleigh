@@ -10,19 +10,21 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import lombok.Getter;
+import com.google.common.collect.Lists;
+
 import cost.HaversineDistance;
 import domain.SleighLocation;
 
 public class SleighLocationGridHolder {
 
     private final Map<GridCoordinate, Collection<SleighLocation>> locationMap;
+    private final Set<SleighLocation> locations;
     private final double latGridSize;
     private final double longGridSize;
-    @Getter private int numLocations;
     
     public SleighLocationGridHolder(double latGridSize, double longGridSize) {
         locationMap = new HashMap<>();
+        locations = new HashSet<>();
         this.latGridSize = latGridSize;
         this.longGridSize = longGridSize;
     }
@@ -34,7 +36,7 @@ public class SleighLocationGridHolder {
             locationMap.put(coordinate, new HashSet<>());
         }
         locationMap.get(coordinate).add(location);
-        numLocations++;
+        locations.add(location);
     }
     
     public boolean remove(SleighLocation location) {
@@ -44,10 +46,12 @@ public class SleighLocationGridHolder {
         if (locationMap.containsKey(coordinate)) {
             removed = locationMap.get(coordinate).remove(location);
         }
-        if (removed) {
-            numLocations--;
-        }
+        locations.remove(location);
         return removed;
+    }
+    
+    public int getNumLocations() {
+        return locations.size();
     }
     
     /**
@@ -58,7 +62,7 @@ public class SleighLocationGridHolder {
      * @param num of neighboring grid points along the longitude lines
      * @return A collection of locations
      */
-    public Collection<SleighLocation> getNeighbors(SleighLocation location, int numNeighborsLat,
+    public Set<SleighLocation> getNeighbors(SleighLocation location, int numNeighborsLat,
             int numNeighborsLong) {
         Set<SleighLocation> returnLocations = new LinkedHashSet<>();
         for (int i = -numNeighborsLat; i <= numNeighborsLat; i++) {
@@ -77,12 +81,24 @@ public class SleighLocationGridHolder {
     }
 
     public Optional<SleighLocation> getClosestLocation(SleighLocation location) {
+        List<SleighLocation> neighbors = getClosestNLocations(location, 1);
+        if ( neighbors.isEmpty() ) {
+            return Optional.empty();
+        } else {
+            return Optional.of(neighbors.get(0));
+        }
+    }
+    
+    public List<SleighLocation> getClosestNLocations(SleighLocation location, int numNeighbors) {
         Collection<SleighLocation> neighbors = null;
-        int numNeighbors = 0;
-        double maxNeighbors = Math.ceil( Math.max( 360d / latGridSize, 360d / longGridSize ) );
-        while ( neighbors == null || neighbors.isEmpty() && numNeighbors++ <= maxNeighbors ) {
-            //Widen the search until we find at least one neighbor
-            neighbors = getNeighbors(location, numNeighbors, numNeighbors);
+        int numNeighboringGrids = 0;
+        double maxNeighboringGrids = Math.ceil( Math.max( 360d / latGridSize, 360d / longGridSize ) );
+        int upperBoundNumNeighbors = locations.size() - ( locations.contains(location) ? 1 : 0 );
+        numNeighbors = Math.min( numNeighbors, upperBoundNumNeighbors);
+        while ( neighbors == null || 
+                ( neighbors.size() < numNeighbors && numNeighboringGrids++ <= maxNeighboringGrids ) ) {
+            //Widen the search until we find the required number of neighbors
+            neighbors = getNeighbors(location, numNeighboringGrids, numNeighboringGrids);
         }
         //Sort the locations by distance to the given location
         List<SleighLocation> sortedNeighbors = new ArrayList<>();
@@ -93,9 +109,9 @@ public class SleighLocationGridHolder {
             return Double.compare(dist1, dist2);
         });
         if ( sortedNeighbors.isEmpty() ) {
-            return Optional.empty();
+            return Lists.newArrayList();
         } else {
-            return Optional.of(sortedNeighbors.get(0));
+            return sortedNeighbors.subList(0, Math.min(numNeighbors, sortedNeighbors.size())); 
         }
     }
 
